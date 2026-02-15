@@ -324,14 +324,7 @@ function fallbackCopy(text) {
 
 function afterSubmit(text) {
   saveHistory(text);
-  showToast('✅ コピーしました！\nグループLINEに貼り付けて\n送信してください');
-
-  // LINE WORKSが入っていればシェアを試みる
-  if (navigator.share) {
-    setTimeout(() => {
-      navigator.share({ text: text }).catch(() => {});
-    }, 1200);
-  }
+  showToast('✅ クリップボードにコピー完了！\n院長個人LINEに\n貼り付けて送信してください');
 }
 
 // --- 履歴 ---
