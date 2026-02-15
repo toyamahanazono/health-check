@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>健康チェック報告</title>
+<meta name="theme-color" content="#2196F3">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: #f0f4f8; color: #333; min-height: 100vh; padding-bottom: 80px; }
+
+.header { background: linear-gradient(135deg, #1976D2, #42A5F5); color: #fff; padding: 20px 16px; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.header h1 { font-size: 20px; font-weight: 700; }
+.header p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+
+.container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+/* セクション */
+.section { background: #fff; border-radius: 16px; margin-bottom: 16px; padding: 20px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.section-title { font-size: 15px; font-weight: 700; color: #1976D2; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.section-title .icon { font-size: 20px; }
+
+/* タイミング選択 */
+.timing-group { display: flex; gap: 10px; }
+.timing-btn { flex: 1; padding: 14px 8px; border: 2px solid #e0e0e0; border-radius: 12px; background: #fff; font-size: 14px; font-weight: 600; color: #666; cursor: pointer; text-align: center; transition: all 0.2s; }
+.timing-btn.active { border-color: #1976D2; background: #E3F2FD; color: #1976D2; }
+
+/* 名前入力 */
+.name-input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; transition: border-color 0.2s; }
+.name-input:focus { border-color: #1976D2; }
+
+/* 体温入力 */
+.temp-area { display: flex; align-items: center; gap: 12px; justify-content: center; }
+.temp-display { font-size: 48px; font-weight: 700; color: #333; min-width: 160px; text-align: center; transition: color 0.3s; }
+.temp-display.fever { color: #E53935; }
+.temp-display.low-fever { color: #FF9800; }
+.temp-unit { font-size: 20px; color: #999; }
+.temp-controls { display: flex; flex-direction: column; gap: 8px; }
+.temp-btn { width: 52px; height: 52px; border: none; border-radius: 50%; font-size: 24px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.temp-btn.up { background: #FFCDD2; color: #C62828; }
+.temp-btn.up:active { background: #EF9A9A; transform: scale(0.92); }
+.temp-btn.down { background: #BBDEFB; color: #1565C0; }
+.temp-btn.down:active { background: #90CAF9; transform: scale(0.92); }
+.temp-step-toggle { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+.step-btn { padding: 6px 14px; border: 1px solid #ccc; border-radius: 20px; background: #fff; font-size: 13px; cursor: pointer; color: #666; }
+.step-btn.active { border-color: #1976D2; background: #E3F2FD; color: #1976D2; font-weight: 600; }
+.temp-warning { text-align: center; margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: none; }
+.temp-warning.show { display: block; }
+.temp-warning.high { background: #FFEBEE; color: #C62828; }
+.temp-warning.mid { background: #FFF3E0; color: #E65100; }
+
+/* 症状チェック */
+.symptom-list { display: flex; flex-direction: column; gap: 10px; }
+.symptom-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+.symptom-label { font-size: 15px; font-weight: 500; }
+.toggle-group { display: flex; gap: 6px; }
+.toggle-btn { padding: 10px 20px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; color: #999; transition: all 0.2s; min-width: 60px; text-align: center; }
+.toggle-btn.yes.active { border-color: #E53935; background: #FFEBEE; color: #E53935; }
+.toggle-btn.no.active { border-color: #43A047; background: #E8F5E9; color: #43A047; }
+
+/* その他 */
+.other-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; outline: none; resize: none; min-height: 60px; transition: border-color 0.2s; }
+.other-input:focus { border-color: #1976D2; }
+
+/* プレビュー */
+.preview-box { background: #F5F5F5; border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; color: #333; border: 1px solid #e0e0e0; }
+
+/* 送信ボタン */
+.submit-area { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: #fff; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); z-index: 10; }
+.submit-btn { display: block; width: 100%; max-width: 480px; margin: 0 auto; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #1976D2, #42A5F5); cursor: pointer; transition: all 0.2s; }
+.submit-btn:active { transform: scale(0.97); opacity: 0.9; }
+.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* コピー完了 */
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); background: rgba(0,0,0,0.8); color: #fff; padding: 20px 32px; border-radius: 16px; font-size: 16px; font-weight: 600; z-index: 100; opacity: 0; transition: all 0.3s; pointer-events: none; text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* 全部なしボタン */
+.all-none-btn { display: block; width: 100%; padding: 10px; border: 2px solid #43A047; border-radius: 10px; background: #E8F5E9; color: #43A047; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 14px; transition: all 0.2s; }
+.all-none-btn:active { background: #C8E6C9; transform: scale(0.97); }
+
+/* 履歴 */
+.history-item { background: #F5F5F5; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; border-left: 4px solid #1976D2; }
+.history-item .time { font-weight: 700; color: #1976D2; }
+.history-empty { text-align: center; color: #999; font-size: 14px; padding: 20px 0; }
+.clear-history { margin-top: 10px; padding: 10px; border: 1px solid #E53935; border-radius: 10px; background: #fff; color: #E53935; font-size: 13px; cursor: pointer; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏥 健康チェック報告</h1>
+  <p>平木歯科医院 スタッフ用</p>
+</div>
+
+<div class="container">
+
+  <!-- タイミング -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🕐</span> 確認タイミング</div>
+    <div class="timing-group">
+      <button class="timing-btn" onclick="setTiming(this, '本日（帰宅前）')" data-val="本日（帰宅前）">本日<br><small>帰宅前／就寝前</small></button>
+      <button class="timing-btn" onclick="setTiming(this, '明日朝（出勤前）')" data-val="明日朝（出勤前）">明日の朝<br><small>出勤前</small></button>
+    </div>
+  </div>
+
+  <!-- 名前 -->
+  <div class="section">
+    <div class="section-title"><span class="icon">👤</span> 氏名</div>
+    <input type="text" class="name-input" id="staffName" placeholder="名前を入力" autocomplete="name">
+  </div>
+
+  <!-- 体温 -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🌡️</span> 体温</div>
+    <div class="temp-area">
+      <div>
+        <span class="temp-display" id="tempDisplay">36.5</span>
+        <span class="temp-unit">℃</span>
+      </div>
+      <div class="temp-controls">
+        <button class="temp-btn up" onclick="changeTemp(1)">＋</button>
+        <button class="temp-btn down" onclick="changeTemp(-1)">－</button>
+      </div>
+    </div>
+    <div class="temp-step-toggle">
+      <button class="step-btn active" onclick="setStep(this, 0.1)">0.1℃</button>
+      <button class="step-btn" onclick="setStep(this, 0.5)">0.5℃</button>
+    </div>
+    <div class="temp-warning" id="tempWarning"></div>
+  </div>
+
+  <!-- 症状 -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📋</span> 症状チェック</div>
+    <button class="all-none-btn" onclick="setAllNone()">すべて「なし」にする</button>
+    <div class="symptom-list" id="symptomList"></div>
+  </div>
+
+  <!-- その他 -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📝</span> その他の症状</div>
+    <textarea class="other-input" id="otherSymptom" placeholder="関節痛、悪寒、下痢・嘔吐など（なければ空欄でOK）"></textarea>
+  </div>
+
+  <!-- プレビュー -->
+  <div class="section">
+    <div class="section-title"><span class="icon">👁️</span> 送信内容プレビュー</div>
+    <div class="preview-box" id="preview">入力内容がここに表示されます</div>
+  </div>
+
+  <!-- 報告履歴 -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📜</span> 報告履歴</div>
+    <div id="historyList"></div>
+    <button class="clear-history" id="clearHistoryBtn" onclick="clearHistory()" style="display:none">履歴をクリア</button>
+  </div>
+
+</div>
+
+<!-- 送信ボタン -->
+<div class="submit-area">
+  <button class="submit-btn" id="submitBtn" onclick="submitReport()">📋 内容をコピーして報告</button>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<script>
+// --- 状態 ---
+let timing = '';
+let temperature = 36.5;
+let tempStep = 0.1;
+const symptoms = [
+  { id: 'cough', label: '咳', value: null },
+  { id: 'runny', label: '鼻水', value: null },
+  { id: 'headache', label: '頭痛', value: null },
+  { id: 'throat', label: '咽頭痛', value: null },
+  { id: 'fatigue', label: '倦怠感（強いだるさ）', value: null },
+];
+
+// --- 初期化 ---
+function init() {
+  renderSymptoms();
+  loadName();
+  loadHistory();
+  updatePreview();
+
+  document.getElementById('staffName').addEventListener('input', () => { saveName(); updatePreview(); });
+  document.getElementById('otherSymptom').addEventListener('input', updatePreview);
+}
+
+// --- タイミング ---
+function setTiming(btn, val) {
+  timing = val;
+  document.querySelectorAll('.timing-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updatePreview();
+}
+
+// --- 体温 ---
+function changeTemp(dir) {
+  temperature = Math.round((temperature + dir * tempStep) * 10) / 10;
+  temperature = Math.max(34.0, Math.min(42.0, temperature));
+  updateTempDisplay();
+  updatePreview();
+}
+
+function setStep(btn, step) {
+  tempStep = step;
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updateTempDisplay() {
+  const el = document.getElementById('tempDisplay');
+  const warn = document.getElementById('tempWarning');
+  el.textContent = temperature.toFixed(1);
+  el.classList.remove('fever', 'low-fever');
+  warn.classList.remove('show', 'high', 'mid');
+
+  if (temperature >= 37.5) {
+    el.classList.add('fever');
+    warn.textContent = '⚠️ 37.5℃以上：出勤前に必ず連絡してください';
+    warn.classList.add('show', 'high');
+  } else if (temperature >= 37.0) {
+    el.classList.add('low-fever');
+    warn.textContent = '注意：微熱の範囲です。体調に注意してください';
+    warn.classList.add('show', 'mid');
+  }
+}
+
+// --- 症状 ---
+function renderSymptoms() {
+  const list = document.getElementById('symptomList');
+  list.innerHTML = symptoms.map((s, i) => `
+    <div class="symptom-item">
+      <span class="symptom-label">${s.label}</span>
+      <div class="toggle-group">
+        <button class="toggle-btn no" data-idx="${i}" data-val="no" onclick="toggleSymptom(${i}, false)">なし</button>
+        <button class="toggle-btn yes" data-idx="${i}" data-val="yes" onclick="toggleSymptom(${i}, true)">あり</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleSymptom(idx, val) {
+  symptoms[idx].value = val;
+  const btns = document.querySelectorAll(`.toggle-btn[data-idx="${idx}"]`);
+  btns.forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.toggle-btn[data-idx="${idx}"][data-val="${val ? 'yes' : 'no'}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  updatePreview();
+}
+
+function setAllNone() {
+  symptoms.forEach((s, i) => toggleSymptom(i, false));
+}
+
+// --- プレビュー ---
+function updatePreview() {
+  const name = document.getElementById('staffName').value.trim();
+  const other = document.getElementById('otherSymptom').value.trim();
+
+  let lines = [];
+  if (timing) lines.push(`【${timing}】`);
+  if (name) lines.push(`氏名：${name}`);
+  lines.push(`体温：${temperature.toFixed(1)}℃`);
+
+  const symptomTexts = symptoms.map(s => {
+    const status = s.value === null ? '未選択' : (s.value ? 'あり' : 'なし');
+    return `${s.label}：${status}`;
+  });
+  lines.push(symptomTexts.join('・'));
+
+  if (other) lines.push(`その他：${other}`);
+  else lines.push('その他：なし');
+
+  document.getElementById('preview').textContent = lines.join('\n');
+}
+
+// --- 報告送信 ---
+function submitReport() {
+  const name = document.getElementById('staffName').value.trim();
+  if (!timing) { showToast('⚠️ タイミングを選択してください'); return; }
+  if (!name) { showToast('⚠️ 名前を入力してください'); return; }
+  if (symptoms.some(s => s.value === null)) { showToast('⚠️ すべての症状を選択してください'); return; }
+
+  const text = document.getElementById('preview').textContent;
+
+  // コピー
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      afterSubmit(text);
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  afterSubmit(text);
+}
+
+function afterSubmit(text) {
+  saveHistory(text);
+  showToast('✅ コピーしました！\nLINE WORKSに貼り付けて\n送信してください');
+
+  // LINE WORKSが入っていればシェアを試みる
+  if (navigator.share) {
+    setTimeout(() => {
+      navigator.share({ text: text }).catch(() => {});
+    }, 1200);
+  }
+}
+
+// --- 履歴 ---
+function saveHistory(text) {
+  const history = JSON.parse(localStorage.getItem('healthHistory') || '[]');
+  const now = new Date();
+  const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  history.unshift({ time: timeStr, text: text });
+  if (history.length > 10) history.pop();
+  localStorage.setItem('healthHistory', JSON.stringify(history));
+  loadHistory();
+}
+
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem('healthHistory') || '[]');
+  const container = document.getElementById('historyList');
+  const clearBtn = document.getElementById('clearHistoryBtn');
+
+  if (history.length === 0) {
+    container.innerHTML = '<div class="history-empty">まだ報告履歴がありません</div>';
+    clearBtn.style.display = 'none';
+  } else {
+    container.innerHTML = history.map(h =>
+      `<div class="history-item"><span class="time">${h.time}</span><br>${h.text.replace(/\n/g, '<br>')}</div>`
+    ).join('');
+    clearBtn.style.display = 'block';
+  }
+}
+
+function clearHistory() {
+  if (confirm('履歴をすべて削除しますか？')) {
+    localStorage.removeItem('healthHistory');
+    loadHistory();
+  }
+}
+
+// --- 名前の保存 ---
+function saveName() {
+  localStorage.setItem('staffName', document.getElementById('staffName').value);
+}
+function loadName() {
+  const saved = localStorage.getItem('staffName');
+  if (saved) document.getElementById('staffName').value = saved;
+}
+
+// --- トースト ---
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// --- 起動 ---
+init();
+</script>
+</body>
+</html>
